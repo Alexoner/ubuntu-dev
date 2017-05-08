@@ -5,7 +5,7 @@ MAINTAINER onerhao@gmail.com
 # The /etc/default/locale file is loaded by PAM; see /etc/pam.d/login for example. However, PAM is not invoked when running a command in a Docker container. To configure the locale, simply set the relevant environment variable in your Dockerfile
 #RUN locale-gen en_US.UTF-8  
 ENV LANG en_US.UTF-8  
-ENV LANGUAGE en_US:en  
+ENV LANGUAGE en_US:UTF-8  
 ENV LC_ALL en_US.UTF-8
 
 # TODO: change the apt-get mirror in /etc/apt/sources.list and pip mirror in ~/.pip/pip.conf

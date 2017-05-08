@@ -4,28 +4,27 @@ setup_mirror () {
 	cd /etc/apt || exit -1
 	cp ./sources.list ./sources.list.bak
 	cat <<-EOF >>./sources.list
-	deb http://mirrors.aliyun.com/ubuntu/ xenial main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-proposed main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-proposed main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
 	EOF
 	cd - || exit -1
 }
 
 install_essential () {
     # install basic requirements
-    apt-get update && apt-get install -y --no-install-recommends \
+    apt update && apt install -y --no-install-recommends \
         build-essential \
         git \
-        cmake \
         curl \
-        unzip \
+        cmake \
         python-dev \
         python-pip \
         python3-dev \
@@ -36,13 +35,17 @@ install_essential () {
         libffi-dev \
         libxml2-dev \
         libxslt-dev \
-        software-properties-common
+        software-properties-common \
+        unzip
 }
 
 setup_network () {
     # install shadowsocks-libev
     apt update
     apt install -y shadowsocks-libev
+	mkdir -p /etc/shadowsocks-libev || exit -1
+	cd /etc/shadowsocks-libev
+	cp config.json config.json.default
     cat <<-EOF >> /etc/shadowsocks-libev/config.json
     {
         "server":"example.com or X.X.X.X",
@@ -54,6 +57,7 @@ setup_network () {
 	EOF
     #service shadowsocks-libev restart
     systemctl start shadowsocks-libev
+	cd -
 }
 
 setup_locale () {
@@ -81,7 +85,8 @@ setup_spf13 () {
 	curl https://raw.githubusercontent.com/Alexoner/spf13-vim/3.0/bootstrap.sh -L |sh -c
 }
 
-install_ohmyzsh () {
+install_zsh () {
+	apt install -y --no-install-recommends zsh
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 }
 
@@ -102,7 +107,9 @@ setup_display () {
     #  Install vnc, xvfb in order to create a 'fake' display
     apt install -y x11vnc xvfb
     # Setup a password
+	su admin
     x11vnc -storepasswd 1234 ~/.vnc/passwd
+	exit
 }
 
 
@@ -112,7 +119,7 @@ install_ml () {
 }
 
 install_caffe () {
-    apt-get install -y --no-install-recommends \
+    apt install -y --no-install-recommends \
         libatlas-base-dev \
         libboost-all-dev \
         libboost-mpi-dev \
@@ -149,14 +156,14 @@ clean () {
 	rm -rf /var/lib/apt/lists/*
 }
 
-setup_mirror
+#setup_mirror
 install_essential
 setup_network
 setup_locale
 #install_python
 install_neovim
 #setup_spf13
-install_ohmyzsh
+install_zsh
 #setup_user
 setup_display
 clean
