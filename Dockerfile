@@ -1,5 +1,10 @@
+# Developing Environment in Ubuntu
+#
+# VERSION               0.1
+
 FROM ubuntu:16.10
-MAINTAINER onerhao@gmail.com
+LABEL maintainer onerhao@gmail.com
+LABEL Description="Ubuntu for development environment" Vendor="onerhao" Version="0.1"
 
 # Set the locale
 # The /etc/default/locale file is loaded by PAM; see /etc/pam.d/login for example. However, PAM is not invoked when running a command in a Docker container. To configure the locale, simply set the relevant environment variable in your Dockerfile
