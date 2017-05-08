@@ -1,115 +1,152 @@
 #!/bin/sh
 
 setup_mirror () {
-	cd /etc/apt || exit -1
-	cp ./sources.list ./sources.list.bak
-	cat <<-EOF >>./sources.list
-	deb http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
+    cd /etc/apt || exit -1
+    cp ./sources.list ./sources.list.default
+    #cat <<-EOF >./sources.list
+	#deb http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
+	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
+	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
+	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
+	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
+	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
+	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
+	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
+	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
+	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
+	#EOF
+    cat <<-EOF >./sources.list
+	deb http://mirrors.aliyun.com/ubuntu/ zesty main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ zesty-security main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ zesty-updates main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ zesty-proposed main restricted universe multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ zesty-backports main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ zesty main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ zesty-security main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ zesty-updates main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ zesty-proposed main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ zesty-backports main restricted universe multiverse
 	EOF
-	cd - || exit -1
+    cd - || exit -1
 }
 
 install_essential () {
     # install basic requirements
-    apt update && apt install -y --no-install-recommends \
+    apt update
+	echo "installing essential tools"
+    apt install -y --no-install-recommends \
         build-essential \
         git \
         curl \
         cmake \
+        software-properties-common \
         python-dev \
         python-pip \
+        python3.6 \
         python3-dev \
         python3-pip \
         python-scipy \
         python-numpy \
-        libssl-dev \
-        libffi-dev \
-        libxml2-dev \
-        libxslt-dev \
-        software-properties-common \
+        zsh \
+        tmux \
         unzip
 }
 
 setup_network () {
     # install shadowsocks-libev
-    apt update
-    apt install -y shadowsocks-libev
-	mkdir -p /etc/shadowsocks-libev || exit -1
-	cd /etc/shadowsocks-libev
-	cp config.json config.json.default
-    cat <<-EOF >> /etc/shadowsocks-libev/config.json
-    {
-        "server":"example.com or X.X.X.X",
-        "server_port":9206,
-        "password":"password",
-        "timeout":300,
-        "method":"aes-256-cfb"
-    }
+    apt install -y --no-install-recommends shadowsocks-libev
+    mkdir -p /etc/shadowsocks-libev || exit -1
+    cd /etc/shadowsocks-libev
+    cp config.json config.json.default
+	cat <<-EOF > /etc/shadowsocks-libev/config.json
+	{
+		"server":"example.com or X.X.X.X",
+		"server_port":9206,
+		"password":"password",
+		"timeout":300,
+		"method":"aes-256-cfb"
+	}
 	EOF
     #service shadowsocks-libev restart
-    systemctl start shadowsocks-libev
-	cd -
+    #systemctl restart shadowsocks-libev
+    service shadowsocks-libev restart
+    cd -
 }
 
 setup_locale () {
     locale-gen en_US.UTF-8
 }
 
-install_python() {
+setup_python() {
+	pip3 install virtualenvwrapper
     su Alex
-    virtualenv "$HOME/.python3" -p python3 || exit 1
+    virtualenv "$HOME/.python3" -p python3.6 || exit 1
+	pip install setuptools
     exit
+}
+
+setup_python_mirror () {
+mkdir ~/.pip
+# change pip' mirror url
+cat <<- EOF  > ~/.pip/pip.conf
+[global]
+#index-urls:  https://pypi.douban.com, https://mirrors.aliyun.com/pypi,
+#checkout https://www.pypi-mirrors.org/ for more available mirror servers
+index-url = https://pypi.douban.com/simple
+trusted-host = pypi.douban.com
+EOF
 }
 
 install_neovim () {
     add-apt-repository ppa:neovim-ppa/unstable -y
-    apt update && apt install -y neovim && \
+    apt update
+    apt install -y --no-install-recommends neovim && \
         update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
         update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
         update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60 && \
         update-alternatives --config vim && \
         update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 60 && \
         update-alternatives --config editor
+	pip install neovim
 }
 
 setup_spf13 () {
-	curl https://raw.githubusercontent.com/Alexoner/spf13-vim/3.0/bootstrap.sh -L |sh -c
+	su Admin
+    curl https://raw.githubusercontent.com/Alexoner/spf13-vim/3.0/bootstrap.sh -L |sh -s
+	exit 0
 }
 
 install_zsh () {
-	apt install -y --no-install-recommends zsh
+    apt install -y --no-install-recommends zsh
+}
+
+setup_zsh () {
+	su Alex
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+	exit 0
 }
 
 setup_user () {
-    cat <<- EOF >> /usr/bin/
+    #cat <<- EOF >> /usr/bin/setup_user
 	#!/bin/sh
 
 	useradd -m Alex || exit 1
 
 	su Alex
 	cd $HOME || exit -1
-	curl -fsSL https://rawcontent.github.com/Alexoner/bootstrap.sh |sh -c
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 	exit 0
-	EOF
+	#EOF
+	#chmod +x /usr/bin/setup_user
 }
 
 setup_display () {
     #  Install vnc, xvfb in order to create a 'fake' display
-    apt install -y x11vnc xvfb
+    apt install -y --no-install-recommends x11vnc xvfb
     # Setup a password
-	su admin
+    su admin
     x11vnc -storepasswd 1234 ~/.vnc/passwd
-	exit
+    exit 0
 }
 
 
@@ -153,17 +190,19 @@ install_caffe () {
 }
 
 clean () {
-	rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*
 }
 
-#setup_mirror
+setup_mirror
 install_essential
 setup_network
 setup_locale
-#install_python
+setup_python
 install_neovim
-#setup_spf13
 install_zsh
-#setup_user
-setup_display
+
+setup_user
+setup_zsh
+setup_spf13
+#setup_display
 clean
