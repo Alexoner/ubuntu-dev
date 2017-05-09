@@ -74,14 +74,14 @@ setup_network () {
 }
 
 setup_locale () {
+	apt install -y locales
     locale-gen en_US.UTF-8
 }
 
 setup_python() {
-	pip3 install virtualenvwrapper
+	pip3 install setuptools virtualenvwrapper
     su Alex
-    virtualenv "$HOME/.python3" -p python3.6 || exit 1
-	pip install setuptools
+    #virtualenv "$HOME/.python3" -p python3.6 || exit 1
     exit
 }
 
@@ -193,7 +193,7 @@ clean () {
     rm -rf /var/lib/apt/lists/*
 }
 
-setup_mirror
+#setup_mirror
 install_essential
 setup_network
 setup_locale
