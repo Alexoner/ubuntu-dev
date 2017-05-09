@@ -15,7 +15,7 @@ ENV LC_ALL en_US.UTF-8
 
 # Copy our install script into the container to execute it later
 COPY ./scripts/install.sh /usr/bin/
-RUN /usr/bin/install.sh
+RUN bash /usr/bin/install.sh
 
 
 #EXPOSE 8080 80 8000

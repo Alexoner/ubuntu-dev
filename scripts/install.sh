@@ -1,20 +1,10 @@
 #!/bin/sh
 
+WORK_USER=Alex
+
 setup_mirror () {
     cd /etc/apt || exit -1
     cp ./sources.list ./sources.list.default
-    #cat <<-EOF >./sources.list
-	#deb http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
-	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
-	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
-	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
-	#deb http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
-	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety main restricted universe multiverse
-	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-security main restricted universe multiverse
-	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-updates main restricted universe multiverse
-	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-proposed main restricted universe multiverse
-	#deb-src http://mirrors.aliyun.com/ubuntu/ yakkety-backports main restricted universe multiverse
-	#EOF
     cat <<-EOF >./sources.list
 	deb http://mirrors.aliyun.com/ubuntu/ zesty main restricted universe multiverse
 	deb http://mirrors.aliyun.com/ubuntu/ zesty-security main restricted universe multiverse
@@ -27,32 +17,42 @@ setup_mirror () {
 	deb-src http://mirrors.aliyun.com/ubuntu/ zesty-proposed main restricted universe multiverse
 	deb-src http://mirrors.aliyun.com/ubuntu/ zesty-backports main restricted universe multiverse
 	EOF
-    cd - || exit -1
+    cd -
 }
 
 install_essential () {
     # install basic requirements
-    apt update
-	echo "installing essential tools"
+	echo "=====================installing essential tools====================="
+	apt update
     apt install -y --no-install-recommends \
         build-essential \
-        git \
-        curl \
-        cmake \
-        software-properties-common \
-        python-dev \
-        python-pip \
-        python3.6 \
-        python3-dev \
-        python3-pip \
-        python-scipy \
-        python-numpy \
+        cmake
+
+    apt install -y --no-install-recommends \
         zsh \
         tmux \
+        git \
+        curl \
         unzip
+	#apt install -y --no-install-recommends software-properties-common
+}
+
+install_python () {
+	echo "=====================installing python====================="
+	apt install -y --no-install-recommends \
+		python-dev \
+		python-pip \
+		python3.6 \
+		python3.6-dev \
+		python3.6-venv
+		#python3-dev \
+		#python3-pip \
+		#python-scipy \
+		#python-numpy
 }
 
 setup_network () {
+	echo "=====================setting up network====================="
     # install shadowsocks-libev
     apt install -y --no-install-recommends shadowsocks-libev
     mkdir -p /etc/shadowsocks-libev || exit -1
@@ -74,22 +74,61 @@ setup_network () {
 }
 
 setup_locale () {
+	echo "=====================setting up locale====================="
 	apt install -y locales
     locale-gen en_US.UTF-8
 }
 
+install_zsh () {
+    apt install -y --no-install-recommends zsh
+}
+
+install_neovim () {
+	echo "=====================installing neovim====================="
+    #add-apt-repository ppa:neovim-ppa/stable -y
+    apt install -y --no-install-recommends neovim && \
+        update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
+        update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
+        update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60 && \
+        update-alternatives --config vim && \
+        update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 60 && \
+        update-alternatives --config editor
+}
+
+setup_user () {
+	echo "=====================setting up user $WORK_USER====================="
+    #cat <<- EOF >> /usr/bin/setup_user
+	#!/bin/sh
+
+    apt install -y --no-install-recommends sudo
+	useradd -m -s /bin/zsh $WORK_USER -G sudo || exit 1
+	passwd Alex <<- EOF
+	admin
+	admin
+	EOF
+	#useradd -m $WORK_USER -G sudo || exit 1
+
+	#EOF
+	#chmod +x /usr/bin/setup_user
+}
+
 setup_python() {
-	pip3 install setuptools
-	pip3 install virtualenv #virtualenvwrapper
-    su Alex
-    #virtualenv "$HOME/.python3" -p python3.6 || exit 1
-    exit
+	echo "=====================setting up python=====================$USER"
+	#su - $WORK_USER -c "virtualenv $HOME/.python3 -p python3.6"
+	VENV_DIR=$HOME/.python3
+	python3.6 -m venv $VENV_DIR
+	source $VENV_DIR/bin/activate
+	pip install setuptools
+	#pip install virtualenv #virtualenvwrapper
+	# TODO: install from requirements.txt
+	#deactivate
 }
 
 setup_python_mirror () {
-mkdir ~/.pip
+	echo "=====================setting up python mirror=====================$(whoami)"
+	mkdir ~/.pip
 # change pip' mirror url
-cat <<- EOF  > ~/.pip/pip.conf
+	cat <<- EOF  > ~/.pip/pip.conf
 [global]
 #index-urls:  https://pypi.douban.com, https://mirrors.aliyun.com/pypi,
 #checkout https://www.pypi-mirrors.org/ for more available mirror servers
@@ -98,65 +137,39 @@ trusted-host = pypi.douban.com
 EOF
 }
 
-install_neovim () {
-    #add-apt-repository ppa:neovim-ppa/stable -y
-    #apt update
-    apt install -y --no-install-recommends neovim && \
-        update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
-        update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
-        update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60 && \
-        update-alternatives --config vim && \
-        update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 60 && \
-        update-alternatives --config editor
-	pip install neovim
+setup_zsh () {
+	echo "=====================setting up zsh=====================$(whoami)"
+	export ZSH=""
+	cd "$HOME"
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+	#exit
 }
 
 setup_spf13 () {
-	su Admin
+	source ~/.python3/bin/activate
+	pip install neovim
+	echo "=====================installing spf13=====================$(whoami)"
     curl https://raw.githubusercontent.com/Alexoner/spf13-vim/3.0/bootstrap.sh -L |sh -s
-	exit 0
-}
-
-install_zsh () {
-    apt install -y --no-install-recommends zsh
-}
-
-setup_zsh () {
-	su Alex
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-	exit 0
-}
-
-setup_user () {
-    #cat <<- EOF >> /usr/bin/setup_user
-	#!/bin/sh
-
-	useradd -m Alex || exit 1
-
-	su Alex
-	cd $HOME || exit -1
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-	exit 0
-	#EOF
-	#chmod +x /usr/bin/setup_user
+	#exit
 }
 
 setup_display () {
+	echo "=====================setting up (fake) display=====================$(whoami)"
     #  Install vnc, xvfb in order to create a 'fake' display
     apt install -y --no-install-recommends x11vnc xvfb
     # Setup a password
-    su admin
-    x11vnc -storepasswd 1234 ~/.vnc/passwd
-    exit 0
+    su $WORK_USER -s "x11vnc -storepasswd 1234 ~/.vnc/passwd"
 }
 
 
 install_ml () {
+	echo "=====================installing machine learning tools====================="
     # install tensorflow
     pip3 install tensorflow
 }
 
 install_caffe () {
+	echo "installing caffe"
     apt install -y --no-install-recommends \
         libatlas-base-dev \
         libboost-all-dev \
@@ -191,19 +204,34 @@ install_caffe () {
 }
 
 clean () {
-    rm -rf /var/lib/apt/lists/*
+	echo "=====================cleaning packages=====================$(whoami)"
+	apt clean
+    rm -rf /var/cache/apt/archives/*
 }
 
 #setup_mirror
 install_essential
+install_python
+install_neovim
+
 setup_network
 setup_locale
-setup_python
-install_neovim
-install_zsh
-
 setup_user
-setup_zsh
-setup_spf13
+
+# non-root configuration
+# export functions
+export -f setup_python_mirror
+export -f setup_python
+export -f setup_zsh
+export -f setup_spf13
+export -f setup_display
+
+# execute as another user
+su $WORK_USER -c "bash -c setup_python_mirror"
+su $WORK_USER -c "bash -c setup_python"
+su $WORK_USER -c "bash -c setup_zsh"
+su $WORK_USER -c "bash -c setup_spf13"
 #setup_display
+
+# clean up
 clean
