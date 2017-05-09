@@ -79,7 +79,8 @@ setup_locale () {
 }
 
 setup_python() {
-	pip3 install setuptools virtualenvwrapper
+	pip3 install setuptools
+	pip3 install virtualenv virtualenvwrapper
     su Alex
     #virtualenv "$HOME/.python3" -p python3.6 || exit 1
     exit
@@ -98,8 +99,8 @@ EOF
 }
 
 install_neovim () {
-    add-apt-repository ppa:neovim-ppa/unstable -y
-    apt update
+    #add-apt-repository ppa:neovim-ppa/stable -y
+    #apt update
     apt install -y --no-install-recommends neovim && \
         update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
         update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
