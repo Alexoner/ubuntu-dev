@@ -15,10 +15,12 @@ ENV LC_ALL en_US.UTF-8
 
 # Copy our install script into the container to execute it later
 COPY ./scripts/install.sh /usr/bin/
-RUN bash /usr/bin/install.sh python neovim shadowsocks spf13
+RUN bash /usr/bin/install.sh shell python vim shadowsocks spf13
 
 
 #EXPOSE 8080 80 8000 1080
 #WORKDIR /opt
 
 USER Alex
+
+CMD ["zsh"]
