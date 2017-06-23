@@ -45,8 +45,8 @@ install_python () {
 	apt install -y --no-install-recommends \
 		python-dev \
 		python3.6 \
-		python3.6-venv \
-		#python3.6-dev \
+		python3.6-dev \
+		#python3.6-venv \
 		#python-pip \
 		#python3-dev \
 		#python3-pip \
@@ -105,55 +105,55 @@ apt install -y libatlas-base-dev gfortran libeigen3-dev libtbb-dev libtbb2 \
 
 install_image_dependency () {
 	apt insatll -y --no-install-recommends \
-		libjpeg8-dev libtiff5-dev libjasper-dev libpng12-dev\
+		libjpeg8-dev libtiff5-dev \
+		#libjasper-dev \
+		libpng12-dev\
 		libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev \
 		libx264-dev libgtk-3-dev 
 }
 
 install_opencv () {
 	#
+	cd $HOME
+	pip install numpy flake8 pep8
+
+	wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip \
+	&& unzip 3.2.0.zip \
+	&& rm 3.2.0.zip
+
+	wget https://github.com/Itseez/opencv/archive/3.2.0.zip \
+	&& unzip 3.2.0.zip \
+	&& mkdir /opencv-3.2.0/build \
+	&& cd /opencv-3.2.0/build \
+	-DBUILD_TIFF=ON \
+	-DBUILD_opencv_java=OFF \
+	-DOPENCV_EXTRA_MODULES_PATH=$HOME/opencv_contrib-3.2.0/modules \
+	-DWITH_CUDA=OFF \
+	-DENABLE_AVX=ON \
+	-DWITH_OPENGL=ON \
+	-DWITH_OPENCL=ON \
+	-DWITH_IPP=ON \
+	-DWITH_TBB=ON \
+	-DWITH_EIGEN=ON \
+	-DWITH_V4L=ON \
+	-DBUILD_TESTS=OFF \
+	-DBUILD_PERF_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=RELEASE \
+	-DCMAKE_INSTALL_PREFIX=$(python3.6 -c "import sys; print(sys.prefix)") \
+	-DPYTHON_EXECUTABLE=$(which python3.6) \
+	-DPYTHON_INCLUDE_DIR=$(python3.6 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
+	-DPYTHON_PACKAGES_PATH=$(python3.6 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
+	..
+
+	make install
+	rm /3.2.0.zip \
+	&& rm -r $HOME/opencv-3.2.0
 	whoami;
 }
 
 install_ml () {
 	echo "=====================installing machine learning tools====================="
-    # install tensorflow
-    pip3 install tensorflow
-}
-
-install_caffe () {
-	echo "installing caffe"
-    apt install -y --no-install-recommends \
-        libatlas-base-dev \
-        libboost-all-dev \
-        libboost-mpi-dev \
-        libgflags-dev \
-        libgoogle-glog-dev \
-        libhdf5-serial-dev \
-        libleveldb-dev \
-        liblmdb-dev \
-        libopencv-dev \
-        libprotobuf-dev \
-        libsnappy-dev \
-        protobuf-compiler
-
-
-    CAFFE_ROOT=/opt/caffe
-    #WORKDIR $CAFFE_ROOT
-
-    # FIXME: clone a specific git tag and use ARG instead of ENV once DockerHub supports this.
-    CLONE_TAG=master
-
-    git clone -b ${CLONE_TAG} --depth 1 https://github.com/BVLC/caffe.git . && \
-        for req in $(cat python/requirements.txt) pydot; do pip install $req; done && \
-            mkdir build && cd build && \
-            cmake -DCPU_ONLY=1 .. && \
-            make -j"$(nproc)"
-
-    PYCAFFE_ROOT=$CAFFE_ROOT/python
-    PYTHONPATH=$PYCAFFE_ROOT:$PYTHONPATH
-    PATH=$CAFFE_ROOT/build/tools:$PYCAFFE_ROOT:$PATH
-    echo "$CAFFE_ROOT/build/lib" >> /etc/ld.so.conf.d/caffe.conf && ldconfig
+    pip install keras tensorflow
 }
 
 install_sysadmin () {
@@ -162,8 +162,11 @@ install_sysadmin () {
 
 install_extra () {
 	echo "=====================installing extra development tools====================="
-	apt install -y --no-install-recommends silversearcher-ag rsync
-	apt install -y --no-install-recommends pkg-config
+	apt install -y --no-install-recommends \
+		silversearcher-ag \
+		rsync \
+		less \
+		pkg-config
 }
 
 setup_user () {
@@ -181,6 +184,7 @@ setup_user () {
 
 	#EOF
 	#chmod +x /usr/bin/setup_user
+	chown $WORK_USER -R /usr/local
 }
 
 setup_zsh () {
@@ -272,6 +276,7 @@ clean () {
 
 #setup_mirror
 install_essential
+
 install_python
 install_neovim
 
@@ -279,24 +284,32 @@ setup_network
 setup_locale
 setup_user
 
-# non-root configuration
+# non-root configuration, execute as another user
+su $WORK_USER -c "sh <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L)"
 # export functions
-export -f setup_zsh
-export -f setup_python_mirror
-export -f setup_python
-export -f setup_spf13
+#export -f setup_zsh
+#export -f setup_python_mirror
+#export -f setup_python
+#export -f setup_spf13
 export -f setup_display
+export -f install_ml
+export -f install_opencv
 
-# execute as another user
-su $WORK_USER -c "bash -c setup_zsh"
-su $WORK_USER -c "bash -c setup_python_mirror"
-su $WORK_USER -c "bash -c setup_python"
-su $WORK_USER -c "bash -c setup_spf13"
+# execute exported functions as another user
+#su $WORK_USER -c "bash -c setup_zsh"
+#su $WORK_USER -c "bash -c setup_python_mirror"
+#su $WORK_USER -c "bash -c setup_python"
+#su $WORK_USER -c "bash -c setup_spf13"
+su $WORK_USER -c "bash -c install_ml"
+
+install_image_dependency
+su $WORK_USER -c "bash -c install_opencv"
 
 #setup_display
 #su $WORK_USER -c "bash -c setup_display"
 
 install_extra
+install_sysadmin
 
 # clean up
 clean
