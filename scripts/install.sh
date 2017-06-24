@@ -214,8 +214,8 @@ install_opencv () {
     make install
 
 	# create symlinks so that OpenCV is accessible to Python environment 
-	ln -sv $INSTALL_PREFIX/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
-	ln -sv $INSTALL_PREFIX/cv2.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+	ln -sv $INSTALL_PREFIX/lib/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+	ln -sv $INSTALL_PREFIX/lib/cv2.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
 
     rm -r $HOME/opencv && rm -r $HOME/opencv_contrib
 }
