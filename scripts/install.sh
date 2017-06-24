@@ -43,10 +43,7 @@ install_essential () {
 install_python () {
     echo "=====================installing python====================="
 
-    apt install -y --no-install-recommends \
-        python-dev \
-        python3.6 \
-        python3.6-dev \
+    #apt install -y --no-install-recommends \
         #python3.6-venv \
         #python-pip \
         #python3-dev \
@@ -131,8 +128,8 @@ install_opencv () {
     #wget https://github.com/Itseez/opencv/archive/3.2.0.zip \
     #&& unzip 3.2.0.zip
 
-    mkdir opencv/build \
-    && cd opencv/build \
+    mkdir opencv/build
+    cd opencv/build && cmake \
     -DBUILD_TIFF=ON \
     -DBUILD_opencv_java=OFF \
     -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
