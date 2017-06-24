@@ -2,7 +2,7 @@
 
 WORK_USER=Alex
 
-####################################### GLOBAL SETTINGS #########################################
+####################################### GLOBAL SETTINGS #######################################
 
 setup_mirror () {
     cd /etc/apt || exit -1
@@ -44,6 +44,30 @@ install_essential () {
 	apt install -y --no-install-recommends software-properties-common
 }
 
+setup_user () {
+	echo "=====================setting up user $WORK_USER====================="
+    #cat <<- EOF >> /usr/bin/setup_user
+	#!/bin/sh
+
+    apt install -y --no-install-recommends sudo
+	useradd -m -s /bin/zsh $WORK_USER -G sudo || exit 1
+	passwd Alex <<- EOF
+	admin
+	admin
+	EOF
+	#useradd -m $WORK_USER -G sudo || exit 1
+
+	#EOF
+	#chmod +x /usr/bin/setup_user
+	chown $WORK_USER -R /usr/local
+}
+
+setup_locale () {
+    echo "=====================setting up locale====================="
+    apt install -y locales
+    locale-gen en_US.UTF-8
+}
+
 install_python () {
     echo "=====================installing python====================="
 
@@ -79,12 +103,6 @@ install_shadowsocks () {
     cd -
 }
 
-setup_locale () {
-    echo "=====================setting up locale====================="
-    apt install -y locales
-    locale-gen en_US.UTF-8
-}
-
 install_neovim () {
     echo "=====================installing neovim====================="
     #add-apt-repository ppa:neovim-ppa/stable -y
@@ -110,14 +128,15 @@ apt install -y libatlas-base-dev gfortran libeigen3-dev libtbb-dev libtbb2 \
 install_opencv_dependencies () {
 	# libjasper-dev not available for Ubuntu 17.04, need to install from an earlier release
 	apt-get install -y --no-install-recommends \
-	libgtk3.0-dev pkg-config libavcodec-dev tcl-vtk6 \
+	pkg-config libavcodec-dev tcl-vtk6 \
     libavformat-dev libswscale-dev libtbb2 libtbb-dev libtiff5-dev libjpeg-dev \
-    libjasper-dev libdc1394-22-dev unzip libblas-dev liblapack-dev qt5-default \
+	libdc1394-22-dev unzip libblas-dev liblapack-dev qt5-default \
     libvtk6-dev openjdk-8-jdk libpng-dev libeigen3-dev libtheora-dev ant \
     libvorbis-dev libxvidcore-dev sphinx-common yasm libavutil-dev \
     libopencore-amrnb-dev libopencore-amrwb-dev libavfilter-dev libopenexr-dev  \
     libgstreamer-plugins-base1.0-dev libx264-dev libavresample-dev \
-	libgtkglext1 libgtkglext1-dev 
+	libgtk-3-dev libgtkglext1 libgtkglext1-dev \
+    #libjasper-dev \
 
 	# install nonfree opencv
 	#add-apt-repository --yes ppa:xqms/opencv-nonfree
@@ -133,14 +152,14 @@ install_opencv () {
     cd $HOME
     pip install numpy flake8 pep8
 
-    git clone --depth 1 https://github.com/opencv/opencv.git --branch 3.2.0
     #wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip \
     #&& unzip 3.2.0.zip \
     #&& rm 3.2.0.zip
-
-    git clone --depth 1 https://github.com/opencv/opencv_contrib.git -b 3.2.0
     #wget https://github.com/Itseez/opencv/archive/3.2.0.zip \
     #&& unzip 3.2.0.zip
+
+    git clone --depth 1 https://github.com/opencv/opencv.git --branch 3.2.0
+    git clone --depth 1 https://github.com/opencv/opencv_contrib.git -b 3.2.0
 
     mkdir opencv/build
     cd opencv/build && cmake \
@@ -162,8 +181,9 @@ install_opencv () {
     -DPYTHON_EXECUTABLE=$(which python3.6) \
     -DPYTHON_INCLUDE_DIR=$(python3.6 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
     -DPYTHON_PACKAGES_PATH=$(python3.6 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
+	-DCMAKE_INSTALL_PREFIX=/usr/local \
     ..
-
+	make -j $(nproc)
     make install
     rm -r $HOME/opencv && rm -r $HOME/opencv_contrib
 }
@@ -172,16 +192,6 @@ install_ml () {
 	source ~/.init.sh
 	echo "=====================installing machine learning tools====================="
     pip install keras tensorflow
-}
-
-install_ops_tools () {
-	apt install -y --no-install-recommends \
-		iproute2 \
-		lsof \
-		iptables \
-		usbutils \
-		socat \
-		# nftables
 }
 
 install_dev_tools () {
@@ -193,22 +203,14 @@ install_dev_tools () {
 		pkg-config
 }
 
-setup_user () {
-	echo "=====================setting up user $WORK_USER====================="
-    #cat <<- EOF >> /usr/bin/setup_user
-	#!/bin/sh
-
-    apt install -y --no-install-recommends sudo
-	useradd -m -s /bin/zsh $WORK_USER -G sudo || exit 1
-	passwd Alex <<- EOF
-	admin
-	admin
-	EOF
-	#useradd -m $WORK_USER -G sudo || exit 1
-
-	#EOF
-	#chmod +x /usr/bin/setup_user
-	chown $WORK_USER -R /usr/local
+install_ops_tools () {
+	apt install -y --no-install-recommends \
+		iproute2 \
+		lsof \
+		iptables \
+		usbutils \
+		socat \
+		# nftables
 }
 
 ################################### SETUP HOME #########################################
@@ -233,59 +235,6 @@ setup_shell () {
 	#exit
 }
 
-setup_python_mirror () {
-	echo "=====================setting up python mirror=====================$(whoami)"
-	mkdir ~/.pip
-# change pip' mirror url
-	cat <<- EOF  > ~/.pip/pip.conf
-[global]
-#index-urls:  https://pypi.douban.com, https://mirrors.aliyun.com/pypi,
-#checkout https://www.pypi-mirrors.org/ for more available mirror servers
-index-url = https://pypi.douban.com/simple
-trusted-host = pypi.douban.com
-EOF
-}
-
-setup_python() {
-	echo "=====================setting up python=====================$USER"
-
-	# install Python version manager as a regular user
-	curl -L https://raw.github.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
-	cat <<- EOF >> ~/.init.sh
-
-	########################## pyenv configuration #########################
-	export 'PATH="$HOME/.pyenv/bin:$PATH"'
-	eval "$(pyenv init -)"
-	eval "$(pyenv virtualenv-init -)"
-	EOF
-
-	PYTHON_VERSION=3.6.0
-	pyenv install $PYTHON_VERSION
-	pyenv global $PYTHON_VERSION
-	pyenv virtualenv $PYTHON_VERSION alg
-	pyenv activate alg
-	
-	#source ~/.zshrc
-
-	#su - $WORK_USER -c "virtualenv $HOME/.python3 -p python3.6"
-	#VENV_DIR=$HOME/.python3
-	#python3.6 -m venv $VENV_DIR
-	#echo 'source $VENV_DIR/bin/activate' >> ~/.zshrc
-	#source $VENV_DIR/bin/activate
-	#pip install setuptools
-	#pip install virtualenv #virtualenvwrapper
-	# TODO: install from requirements.txt
-	#deactivate
-}
-
-setup_vim () {
-	source ~/.python3/bin/activate
-	pip install neovim
-	echo "=====================installing spf13=====================$(whoami)"
-    curl https://raw.githubusercontent.com/Alexoner/spf13-vim/3.0/bootstrap.sh -L |sh -s
-	#exit
-}
-
 setup_display () {
 	echo "=====================setting up (fake) display=====================$(whoami)"
     #  Install vnc, xvfb in order to create a 'fake' display
@@ -293,6 +242,7 @@ setup_display () {
     # Setup a password
     su $WORK_USER -s "x11vnc -storepasswd 1234 ~/.vnc/passwd"
 }
+
 
 ###################################### CLEAN UP ##########################################
 
@@ -302,40 +252,91 @@ clean () {
     rm -rf /var/cache/apt/archives/*
 }
 
-#setup_mirror
+if [ $SETUP_MIRROR == "true" -o $SETUP_MIRROR == "TRUE" ]; then
+	echo ""
+	echo "------------------------------"
+	echo "setting up software repository mirror"
+	echo "------------------------------"
+	echo ""
+	setup_mirror
+fi
 install_essential
 
-install_python
-install_neovim
-
-install_shadowsocks
 setup_locale
 setup_user
 
+
 ####################################### non-root configuration ##########################
-# TODO: use my dev-env repository to synchronize $HOME configurations
-su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L) --force"
+# DONE: use my dev-env repository to synchronize $HOME configurations
+su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L) --force $INSTALL_MODULES"
 #su $WORK_USER -c "curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L |bash -s --force"
-# export functions
-export -f install_ml
 
 # execute exported functions as another user
 #su $WORK_USER -c "bash -c setup_shell"
-su $WORK_USER -c "bash -c install_ml"
 
-# TODO: run components based on command line arguments
+######################################### install modules ###############################
+# DONE: run components based on command line arguments
 for ARG in "$@"
 do
 	echo "Configuring $ARG"
+        if [ $ARG == "python" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing python"
+            echo "------------------------------"
+            echo ""
+			install_python
+        fi
+        if [ $ARG == "vim" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing vim"
+            echo "------------------------------"
+            echo ""
+			install_neovim
+        fi
+        if [ $ARG == "dev" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing dev"
+            echo "------------------------------"
+            echo ""
+			install_dev_tools
+        fi
+        if [ $ARG == "ops" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing ops"
+            echo "------------------------------"
+            echo ""
+			install_ops_tools
+        fi
+        if [ $ARG == "shadowsocks" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing shadowsocks"
+            echo "------------------------------"
+            echo ""
+			install_shadowsocks
+        fi
+        if [ $ARG == "ml" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing machine learning packages."
+            echo "------------------------------"
+            echo ""
+			export -f install_ml
+			su $WORK_USER -c "bash -c install_ml"
+        fi
         if [ $ARG == "opencv" ] || [ $ARG == "all" ]; then
             echo ""
             echo "------------------------------"
             echo "installing opencv."
             echo "------------------------------"
             echo ""
-			install_opencv_dependencies
 			export -f install_opencv
-            su $WORK_USER -c "bash -c install_opencv"
+			install_opencv_dependencies
+			su $WORK_USER -c "bash -c install_opencv"
         fi
         if [ $ARG == "chinese" ] || [ $ARG == "all" ]; then
             echo ""
@@ -343,7 +344,7 @@ do
             echo "installing Chinese language pack."
             echo "------------------------------"
             echo ""
-			# TODO:
+			# TODO: install fonts-wqy-zenhei
         fi
         if [ $ARG == "vnc" ] || [ $ARG == "all" ]; then
             echo ""
@@ -351,15 +352,12 @@ do
             echo "installing Chinese language pack."
             echo "------------------------------"
             echo ""
-			# TODO:
 			export -f setup_display
-			#su $WORK_USER -c "bash -c setup_display"
+			su $WORK_USER -c "bash -c setup_display"
         fi
 done
 
 
-install_ops_tools
-install_dev_tools
 
 # clean up
 clean
