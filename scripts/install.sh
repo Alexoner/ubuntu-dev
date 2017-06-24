@@ -288,7 +288,8 @@ setup_locale
 setup_user
 
 # non-root configuration, execute as another user
-su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L)"
+su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L) --force"
+#su $WORK_USER -c "curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L |bash -s --force"
 # export functions
 #export -f setup_zsh
 #export -f setup_python_mirror
