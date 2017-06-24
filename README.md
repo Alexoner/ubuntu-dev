@@ -20,6 +20,13 @@ docker-machine create -d virtualbox --engine-registry-mirror=https://kekmbrvt.mi
 ```shell
 docker build -t dev .
 ```
+Or, customize build modules:
+```shell
+docker build \
+	--build-arg SETUP_MIRROR=true \
+	--build-arg INSTALL_MODULES="shell python vim shadowsocks ml opencv dev ops" \
+	-t dev .
+	```
 
 # Run
 
@@ -117,6 +124,7 @@ However, this method doesn't seem to work on OSX capitan, refer to the next meth
 ### Configure: use socat 
 Socat is a command line based utility that establishes two bidirectional byte streams and transfers data between them, and XQuartz - Apples version of the X server:
 ```shell
+ip=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
 socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\"
 ```
 Then, start the container:

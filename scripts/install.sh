@@ -48,6 +48,7 @@ install_essential () {
     apt update
     apt install -y --no-install-recommends \
         build-essential \
+		make \
         cmake
 
     apt install -y --no-install-recommends \
@@ -90,7 +91,10 @@ setup_locale () {
 
 install_python () {
     echo "=====================installing python====================="
-
+    apt-get install -y \
+    libssl-dev zlib1g-dev libbz2-dev \
+	libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+	xz-utils tk-dev
     #apt install -y --no-install-recommends \
         #python3.6-venv \
         #python-pip \
@@ -155,7 +159,9 @@ install_opencv_dependencies () {
     libvorbis-dev libxvidcore-dev sphinx-common yasm libavutil-dev \
     libopencore-amrnb-dev libopencore-amrwb-dev libavfilter-dev libopenexr-dev  \
     libgstreamer-plugins-base1.0-dev libx264-dev libavresample-dev \
+	libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev \
 	libgtk-3-dev libgtkglext1 libgtkglext1-dev \
+	libgphoto2-dev \
     #libjasper-dev \
 
 	# install nonfree opencv
@@ -188,7 +194,8 @@ install_opencv () {
 	PYTHON_PREFIX=$(python3 -c "import sys; print(sys.prefix)")
 
     mkdir opencv/build
-    cd opencv/build && cmake \
+    cd opencv/build || exit 1
+	cmake \
     -DBUILD_TIFF=ON \
     -DBUILD_opencv_java=OFF \
     -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
@@ -205,10 +212,15 @@ install_opencv () {
     -DCMAKE_BUILD_TYPE=RELEASE \
     -DPYTHON_EXECUTABLE=$(which python3) \
     -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
+    -DPYTHON_LIBRARY= $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/../../libpython3.so \
     -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
     -DCMAKE_INSTALL_PREFIX=$PYTHON_PREFIX \
 	-DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
 	-DENABLE_PRECOMPILED_HEADERS=OFF \
+	-D BUILD_opencv_python3=ON \
+	-D INSTALL_C_EXAMPLES=OFF \
+	-D INSTALL_PYTHON_EXAMPLES=OFF \
+	-D BUILD_EXAMPLES=OFF \
     ..
 	make -j $(nproc)
     make install
