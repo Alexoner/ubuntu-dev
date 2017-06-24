@@ -107,13 +107,15 @@ apt install -y libatlas-base-dev gfortran libeigen3-dev libtbb-dev libtbb2 \
 install_image_dependency () {
 	apt install -y --no-install-recommends \
 		libjpeg8-dev libtiff5-dev \
-		#libjasper-dev \
 		libpng12-dev\
 		libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev \
-		libx264-dev libgtk-3-dev 
+		libx264-dev libgtk-3-dev \
+		#libjasper-dev \
+
 }
 
 install_opencv () {
+	. ~/.init.sh
     #
     echo "=====================installing neovim=====================$(whoami)"
 
