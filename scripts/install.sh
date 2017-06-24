@@ -170,7 +170,7 @@ install_opencv () {
     echo "===================== installing opencv =====================$(whoami)"
 
     cd $HOME
-    pip install numpy flake8 pep8
+    pip install numpy
 
     #wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip \
     #&& unzip 3.2.0.zip \
