@@ -15,7 +15,7 @@ ENV LC_ALL en_US.UTF-8
 
 # Copy our install script into the container to execute it later
 COPY ./scripts/install.sh /usr/bin/
-RUN bash /usr/bin/install.sh shell python vim shadowsocks spf13
+RUN bash /usr/bin/install.sh shell python vim shadowsocks ml
 
 
 #EXPOSE 8080 80 8000 1080

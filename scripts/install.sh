@@ -2,6 +2,8 @@
 
 WORK_USER=Alex
 
+####################################### GLOBAL SETTINGS #########################################
+
 setup_mirror () {
     cd /etc/apt || exit -1
     cp ./sources.list ./sources.list.default
@@ -21,12 +23,12 @@ setup_mirror () {
 }
 
 install_essential () {
-    # install basic requirements
-    echo "=====================installing essential tools====================="
-    apt update
+    # install basic requirements: build essential
+	echo "=====================installing essential tools====================="
+	apt update
     apt install -y --no-install-recommends \
         build-essential \
-        cmake pkg-config 
+        cmake
 
     apt install -y --no-install-recommends \
         zsh \
@@ -35,9 +37,11 @@ install_essential () {
         curl \
         unzip \
         ca-certificates \
+		less \
+		pkg-config \
         libncurses5-dev libncursesw5-dev xz-utils \
         zlib1g-dev libbz2-dev libreadline-dev libssl-dev libsqlite3-dev
-    #apt install -y --no-install-recommends software-properties-common
+	apt install -y --no-install-recommends software-properties-common
 }
 
 install_python () {
@@ -52,11 +56,12 @@ install_python () {
         #python-numpy
 }
 
-setup_network () {
-    echo "=====================setting up network====================="
-    # install shadowsocks-libev
+install_shadowsocks () {
+	echo "=====================setting up network====================="
+    # install shadowsocks
     apt install -y --no-install-recommends shadowsocks-libev
     mkdir -p /etc/shadowsocks-libev || exit -1
+
     cd /etc/shadowsocks-libev
     cp config.json config.json.default
 	cat <<-EOF > /etc/shadowsocks-libev/config.json
@@ -68,9 +73,9 @@ setup_network () {
 		"method":"aes-256-cfb"
 	}
 	EOF
-    #service shadowsocks-libev restart
     #systemctl restart shadowsocks-libev
     service shadowsocks-libev restart
+
     cd -
 }
 
@@ -78,10 +83,6 @@ setup_locale () {
     echo "=====================setting up locale====================="
     apt install -y locales
     locale-gen en_US.UTF-8
-}
-
-install_zsh () {
-    apt install -y --no-install-recommends zsh
 }
 
 install_neovim () {
@@ -96,19 +97,32 @@ install_neovim () {
         update-alternatives --config editor
 }
 
+install_clang () {
+	# install clang compiler
+	apt install -y --no-install-recommends clang
+}
+
 install_computation_dependency () {
 apt install -y libatlas-base-dev gfortran libeigen3-dev libtbb-dev libtbb2 \
     libhdf5-dev llvm
 }
 
-install_image_dependency () {
-	apt install -y --no-install-recommends \
-		libjpeg8-dev libtiff5-dev \
-		libpng12-dev\
-		libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev \
-		libx264-dev libgtk-3-dev \
-		#libjasper-dev \
+install_opencv_dependencies () {
+	# libjasper-dev not available for Ubuntu 17.04, need to install from an earlier release
+	apt-get install -y --no-install-recommends \
+	libgtk3.0-dev pkg-config libavcodec-dev tcl-vtk6 \
+    libavformat-dev libswscale-dev libtbb2 libtbb-dev libtiff5-dev libjpeg-dev \
+    libjasper-dev libdc1394-22-dev unzip libblas-dev liblapack-dev qt5-default \
+    libvtk6-dev openjdk-8-jdk libpng-dev libeigen3-dev libtheora-dev ant \
+    libvorbis-dev libxvidcore-dev sphinx-common yasm libavutil-dev \
+    libopencore-amrnb-dev libopencore-amrwb-dev libavfilter-dev libopenexr-dev  \
+    libgstreamer-plugins-base1.0-dev libx264-dev libavresample-dev \
+	libgtkglext1 libgtkglext1-dev 
 
+	# install nonfree opencv
+	#add-apt-repository --yes ppa:xqms/opencv-nonfree
+	#apt-get update
+	#apt-get install -y libopencv-nonfree-dev
 }
 
 install_opencv () {
@@ -155,15 +169,22 @@ install_opencv () {
 }
 
 install_ml () {
+	source ~/.init.sh
 	echo "=====================installing machine learning tools====================="
     pip install keras tensorflow
 }
 
-install_sysadmin () {
-	apt install -y --no-install-recommends iproute2 lsof iptables # nftables
+install_ops_tools () {
+	apt install -y --no-install-recommends \
+		iproute2 \
+		lsof \
+		iptables \
+		usbutils \
+		socat \
+		# nftables
 }
 
-install_extra () {
+install_dev_tools () {
 	echo "=====================installing extra development tools====================="
 	apt install -y --no-install-recommends \
 		silversearcher-ag \
@@ -190,7 +211,9 @@ setup_user () {
 	chown $WORK_USER -R /usr/local
 }
 
-setup_zsh () {
+################################### SETUP HOME #########################################
+
+setup_shell () {
 	echo "=====================setting up zsh=====================$(whoami)"
 	export ZSH=""
 	cd "$HOME"
@@ -255,7 +278,7 @@ setup_python() {
 	#deactivate
 }
 
-setup_spf13 () {
+setup_vim () {
 	source ~/.python3/bin/activate
 	pip install neovim
 	echo "=====================installing spf13=====================$(whoami)"
@@ -271,6 +294,8 @@ setup_display () {
     su $WORK_USER -s "x11vnc -storepasswd 1234 ~/.vnc/passwd"
 }
 
+###################################### CLEAN UP ##########################################
+
 clean () {
 	echo "=====================cleaning packages=====================$(whoami)"
 	apt clean
@@ -283,37 +308,58 @@ install_essential
 install_python
 install_neovim
 
-setup_network
+install_shadowsocks
 setup_locale
 setup_user
 
-# non-root configuration, execute as another user
+####################################### non-root configuration ##########################
+# TODO: use my dev-env repository to synchronize $HOME configurations
 su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L) --force"
 #su $WORK_USER -c "curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L |bash -s --force"
 # export functions
-#export -f setup_zsh
-#export -f setup_python_mirror
-#export -f setup_python
-#export -f setup_spf13
-export -f setup_display
 export -f install_ml
-export -f install_opencv
 
 # execute exported functions as another user
-#su $WORK_USER -c "bash -c setup_zsh"
-#su $WORK_USER -c "bash -c setup_python_mirror"
-#su $WORK_USER -c "bash -c setup_python"
-#su $WORK_USER -c "bash -c setup_spf13"
+#su $WORK_USER -c "bash -c setup_shell"
 su $WORK_USER -c "bash -c install_ml"
 
-install_image_dependency
-su $WORK_USER -c "bash -c install_opencv"
+# TODO: run components based on command line arguments
+for ARG in "$@"
+do
+	echo "Configuring $ARG"
+        if [ $ARG == "opencv" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing opencv."
+            echo "------------------------------"
+            echo ""
+			install_opencv_dependencies
+			export -f install_opencv
+            su $WORK_USER -c "bash -c install_opencv"
+        fi
+        if [ $ARG == "chinese" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing Chinese language pack."
+            echo "------------------------------"
+            echo ""
+			# TODO:
+        fi
+        if [ $ARG == "vnc" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing Chinese language pack."
+            echo "------------------------------"
+            echo ""
+			# TODO:
+			export -f setup_display
+			#su $WORK_USER -c "bash -c setup_display"
+        fi
+done
 
-#setup_display
-#su $WORK_USER -c "bash -c setup_display"
 
-install_extra
-install_sysadmin
+install_ops_tools
+install_dev_tools
 
 # clean up
 clean

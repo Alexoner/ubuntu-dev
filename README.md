@@ -387,6 +387,8 @@ ffmpeg -f avfoundation -list_devices true -i ""
 ffmpeg -f avfoundation -r 30.0000 -s 640x480 -i "default"  out.mpg
 
 # Linux
+ffmpeg -f v4l2 -list_formats all -i /dev/video0
+ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video0 output.mpg
 ```
 
 ### Reference
