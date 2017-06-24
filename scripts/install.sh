@@ -22,8 +22,8 @@ setup_mirror () {
 
 install_essential () {
     # install basic requirements
-	echo "=====================installing essential tools====================="
-	apt update
+    echo "=====================installing essential tools====================="
+    apt update
     apt install -y --no-install-recommends \
         build-essential \
         cmake pkg-config 
@@ -34,28 +34,29 @@ install_essential () {
         git \
         curl \
         unzip \
-		libncurses5-dev libncursesw5-dev xz-utils \
-		zlib1g-dev libbz2-dev libreadline-dev libssl-dev libsqlite3-dev
-	#apt install -y --no-install-recommends software-properties-common
+        ca-certificates \
+        libncurses5-dev libncursesw5-dev xz-utils \
+        zlib1g-dev libbz2-dev libreadline-dev libssl-dev libsqlite3-dev
+    #apt install -y --no-install-recommends software-properties-common
 }
 
 install_python () {
-	echo "=====================installing python====================="
+    echo "=====================installing python====================="
 
-	apt install -y --no-install-recommends \
-		python-dev \
-		python3.6 \
-		python3.6-dev \
-		#python3.6-venv \
-		#python-pip \
-		#python3-dev \
-		#python3-pip \
-		#python-scipy \
-		#python-numpy
+    apt install -y --no-install-recommends \
+        python-dev \
+        python3.6 \
+        python3.6-dev \
+        #python3.6-venv \
+        #python-pip \
+        #python3-dev \
+        #python3-pip \
+        #python-scipy \
+        #python-numpy
 }
 
 setup_network () {
-	echo "=====================setting up network====================="
+    echo "=====================setting up network====================="
     # install shadowsocks-libev
     apt install -y --no-install-recommends shadowsocks-libev
     mkdir -p /etc/shadowsocks-libev || exit -1
@@ -77,8 +78,8 @@ setup_network () {
 }
 
 setup_locale () {
-	echo "=====================setting up locale====================="
-	apt install -y locales
+    echo "=====================setting up locale====================="
+    apt install -y locales
     locale-gen en_US.UTF-8
 }
 
@@ -87,7 +88,7 @@ install_zsh () {
 }
 
 install_neovim () {
-	echo "=====================installing neovim====================="
+    echo "=====================installing neovim====================="
     #add-apt-repository ppa:neovim-ppa/stable -y
     apt install -y --no-install-recommends neovim && \
         update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60 && \
@@ -104,7 +105,7 @@ apt install -y libatlas-base-dev gfortran libeigen3-dev libtbb-dev libtbb2 \
 }
 
 install_image_dependency () {
-	apt insatll -y --no-install-recommends \
+	apt install -y --no-install-recommends \
 		libjpeg8-dev libtiff5-dev \
 		#libjasper-dev \
 		libpng12-dev\
@@ -113,42 +114,45 @@ install_image_dependency () {
 }
 
 install_opencv () {
-	#
-	cd $HOME
-	pip install numpy flake8 pep8
+    #
+    echo "=====================installing neovim=====================$(whoami)"
 
-	wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip \
-	&& unzip 3.2.0.zip \
-	&& rm 3.2.0.zip
+    cd $HOME
+    pip install numpy flake8 pep8
 
-	wget https://github.com/Itseez/opencv/archive/3.2.0.zip \
-	&& unzip 3.2.0.zip \
-	&& mkdir /opencv-3.2.0/build \
-	&& cd /opencv-3.2.0/build \
-	-DBUILD_TIFF=ON \
-	-DBUILD_opencv_java=OFF \
-	-DOPENCV_EXTRA_MODULES_PATH=$HOME/opencv_contrib-3.2.0/modules \
-	-DWITH_CUDA=OFF \
-	-DENABLE_AVX=ON \
-	-DWITH_OPENGL=ON \
-	-DWITH_OPENCL=ON \
-	-DWITH_IPP=ON \
-	-DWITH_TBB=ON \
-	-DWITH_EIGEN=ON \
-	-DWITH_V4L=ON \
-	-DBUILD_TESTS=OFF \
-	-DBUILD_PERF_TESTS=OFF \
-	-DCMAKE_BUILD_TYPE=RELEASE \
-	-DCMAKE_INSTALL_PREFIX=$(python3.6 -c "import sys; print(sys.prefix)") \
-	-DPYTHON_EXECUTABLE=$(which python3.6) \
-	-DPYTHON_INCLUDE_DIR=$(python3.6 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
-	-DPYTHON_PACKAGES_PATH=$(python3.6 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
-	..
+    git clone --depth 1 https://github.com/opencv/opencv.git --branch 3.2.0
+    #wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip \
+    #&& unzip 3.2.0.zip \
+    #&& rm 3.2.0.zip
 
-	make install
-	rm /3.2.0.zip \
-	&& rm -r $HOME/opencv-3.2.0
-	whoami;
+    git clone --depth 1 https://github.com/opencv/opencv_contrib.git -b 3.2.0
+    #wget https://github.com/Itseez/opencv/archive/3.2.0.zip \
+    #&& unzip 3.2.0.zip
+
+    mkdir /opencv/build \
+    && cd /opencv/build \
+    -DBUILD_TIFF=ON \
+    -DBUILD_opencv_java=OFF \
+    -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+    -DWITH_CUDA=OFF \
+    -DENABLE_AVX=ON \
+    -DWITH_OPENGL=ON \
+    -DWITH_OPENCL=ON \
+    -DWITH_IPP=ON \
+    -DWITH_TBB=ON \
+    -DWITH_EIGEN=ON \
+    -DWITH_V4L=ON \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_PERF_TESTS=OFF \
+    -DCMAKE_BUILD_TYPE=RELEASE \
+    -DCMAKE_INSTALL_PREFIX=$(python3.6 -c "import sys; print(sys.prefix)") \
+    -DPYTHON_EXECUTABLE=$(which python3.6) \
+    -DPYTHON_INCLUDE_DIR=$(python3.6 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
+    -DPYTHON_PACKAGES_PATH=$(python3.6 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
+    ..
+
+    make install
+    rm -r $HOME/opencv && rm -r $HOME/opencv_contrib
 }
 
 install_ml () {
@@ -285,7 +289,7 @@ setup_locale
 setup_user
 
 # non-root configuration, execute as another user
-su $WORK_USER -c "sh <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L)"
+su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L)"
 # export functions
 #export -f setup_zsh
 #export -f setup_python_mirror
