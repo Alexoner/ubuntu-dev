@@ -4,6 +4,26 @@ WORK_USER=Alex
 
 ####################################### GLOBAL SETTINGS #######################################
 
+# retry logic to execute a command that might fail
+try_do() {
+    callback=$1
+    error_fix=$2
+    export -f $callback
+
+    n=0
+    until [ $n -ge 5 ]
+    do
+      bash -c "$callback" && break  # substitute your command here
+      echo "ERROR executing function '$callback', retrying with ${n}th attempt"
+      echo "fixing the error, with command: '$error_fix'\n"
+      bash -c "$error_fix"
+      n=$[$n+1]
+      #n=$($n+1)
+      sleep 15
+    done
+    echo "$callback executed successfully!"
+}
+
 setup_mirror () {
     cd /etc/apt || exit -1
     cp ./sources.list ./sources.list.default
@@ -24,8 +44,8 @@ setup_mirror () {
 
 install_essential () {
     # install basic requirements: build essential
-	echo "=====================installing essential tools====================="
-	apt update
+    echo "=====================installing essential tools====================="
+    apt update
     apt install -y --no-install-recommends \
         build-essential \
         cmake
@@ -147,7 +167,7 @@ install_opencv_dependencies () {
 install_opencv () {
 	. ~/.init.sh
     #
-    echo "=====================installing neovim=====================$(whoami)"
+    echo "===================== installing opencv =====================$(whoami)"
 
     cd $HOME
     pip install numpy flake8 pep8
@@ -160,6 +180,12 @@ install_opencv () {
 
     git clone --depth 1 https://github.com/opencv/opencv.git --branch 3.2.0
     git clone --depth 1 https://github.com/opencv/opencv_contrib.git -b 3.2.0
+
+    # disable precompiled headers to avoid 
+    # stdlib.h: No such file or directory with gcc 6
+
+	INSTALL_PREFIX=/usr/local
+	PYTHON_PREFIX=$(python3 -c "import sys; print(sys.prefix)")
 
     mkdir opencv/build
     cd opencv/build && cmake \
@@ -177,14 +203,20 @@ install_opencv () {
     -DBUILD_TESTS=OFF \
     -DBUILD_PERF_TESTS=OFF \
     -DCMAKE_BUILD_TYPE=RELEASE \
-    -DCMAKE_INSTALL_PREFIX=$(python3.6 -c "import sys; print(sys.prefix)") \
-    -DPYTHON_EXECUTABLE=$(which python3.6) \
-    -DPYTHON_INCLUDE_DIR=$(python3.6 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
-    -DPYTHON_PACKAGES_PATH=$(python3.6 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
-	-DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DPYTHON_EXECUTABLE=$(which python3) \
+    -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
+    -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
+    -DCMAKE_INSTALL_PREFIX=$PYTHON_PREFIX \
+	-DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+	-DENABLE_PRECOMPILED_HEADERS=OFF \
     ..
 	make -j $(nproc)
     make install
+
+	# create symlinks so that OpenCV is accessible to Python environment 
+	ln -sv $INSTALL_PREFIX/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+	ln -sv $INSTALL_PREFIX/cv2.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+
     rm -r $HOME/opencv && rm -r $HOME/opencv_contrib
 }
 
@@ -260,11 +292,13 @@ if [ $SETUP_MIRROR == "true" -o $SETUP_MIRROR == "TRUE" ]; then
 	echo ""
 	setup_mirror
 fi
-install_essential
+
+try_do install_essential "apt update --fix-missing"
 
 setup_locale
 setup_user
 
+install_neovim
 
 ####################################### non-root configuration ##########################
 # DONE: use my dev-env repository to synchronize $HOME configurations
@@ -293,7 +327,7 @@ do
             echo "installing vim"
             echo "------------------------------"
             echo ""
-			install_neovim
+			#install_neovim
         fi
         if [ $ARG == "dev" ] || [ $ARG == "all" ]; then
             echo ""
@@ -335,7 +369,7 @@ do
             echo "------------------------------"
             echo ""
 			export -f install_opencv
-			install_opencv_dependencies
+			try_do install_opencv_dependencies "rm /var/cache/apt/* && apt update --fix-missing"
 			su $WORK_USER -c "bash -c install_opencv"
         fi
         if [ $ARG == "chinese" ] || [ $ARG == "all" ]; then
