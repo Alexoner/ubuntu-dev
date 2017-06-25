@@ -177,7 +177,7 @@ install_opencv_dependencies () {
 }
 
 install_opencv () {
-	. ~/.init.sh
+    . ~/.init.sh
     #
     echo "===================== installing opencv =====================$(whoami)"
 
@@ -196,12 +196,18 @@ install_opencv () {
     # disable precompiled headers to avoid 
     # stdlib.h: No such file or directory with gcc 6
 
-	INSTALL_PREFIX=/usr/local
-	PYTHON_PREFIX=$(python3 -c "import sys; print(sys.prefix)")
+    # to specify the flags when building for Python, it's better to fill those
+    # parameters from return information of Python interpreter.
+    #-DPYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
+    #-DPYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")/libpython3.so \
+    #-DPYTHON_LIBRARY=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")../../libpython3.so \
+
+    INSTALL_PREFIX=/usr/local
+    PYTHON_PREFIX=$(python3 -c "import sys; print(sys.prefix)")
 
     mkdir opencv/build
     cd opencv/build || exit 1
-	cmake \
+    cmake \
     -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
     -DBUILD_TIFF=ON \
     -DWITH_CUDA=OFF \
@@ -220,48 +226,52 @@ install_opencv () {
     -D BUILD_opencv_python3=ON \
     -DPYTHON_EXECUTABLE=$(which python3) \
     -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
-    -DPYTHON_LIBRARY=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")../../libpython3.so \
+    -DPYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
     -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
     -DCMAKE_INSTALL_PREFIX=$PYTHON_PREFIX \
-	-DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-	-DENABLE_PRECOMPILED_HEADERS=OFF \
-	-D INSTALL_C_EXAMPLES=OFF \
-	-D INSTALL_PYTHON_EXAMPLES=OFF \
-	-D BUILD_EXAMPLES=OFF \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    -DENABLE_PRECOMPILED_HEADERS=OFF \
+    -D INSTALL_C_EXAMPLES=OFF \
+    -D INSTALL_PYTHON_EXAMPLES=OFF \
+    -D BUILD_EXAMPLES=OFF \
     ..
-	make -j $(nproc)
+    make -j $(nproc)
     make install
 
-	# create symlinks so that OpenCV is accessible to Python environment 
-	#ln -sv $INSTALL_PREFIX/lib/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
-	ln -sv $INSTALL_PREFIX/lib/python3.6/site-packages/cv2*.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+    # create symlinks so that OpenCV is accessible to Python environment 
+    #ln -sv $INSTALL_PREFIX/lib/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+    ln -sv $INSTALL_PREFIX/lib/python3.6/site-packages/cv2*.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
 
     rm -r $HOME/opencv && rm -r $HOME/opencv_contrib
 }
 
 install_ml () {
-	source ~/.init.sh
-	echo "=====================installing machine learning tools====================="
+    source ~/.init.sh
+    echo "=====================installing machine learning tools====================="
     pip install keras tensorflow
 }
 
 install_dev_tools () {
-	echo "=====================installing extra development tools====================="
-	apt install -y --no-install-recommends \
-		silversearcher-ag \
-		rsync \
-		less \
-		pkg-config
+    echo "=====================installing extra development tools====================="
+    apt install -y --no-install-recommends \
+        silversearcher-ag \
+        exuberant-ctags/zesty \
+        rsync \
+        less \
+        pkg-config
 }
 
 install_ops_tools () {
-	apt install -y --no-install-recommends \
-		iproute2 \
-		lsof \
-		iptables \
-		usbutils \
-		socat \
-		# nftables
+    apt install -y --no-install-recommends \
+		coreutils \
+		file \
+		openssh-client \
+        iproute2 \
+        lsof \
+        iptables \
+        usbutils \
+        socat \
+        # nftables
 }
 
 ################################### SETUP HOME #########################################
@@ -289,7 +299,11 @@ setup_shell () {
 setup_display () {
 	echo "=====================setting up (fake) display=====================$(whoami)"
     #  Install vnc, xvfb in order to create a 'fake' display
-    apt install -y --no-install-recommends x11vnc xvfb
+    apt install -y --no-install-recommends \
+		x11vnc \
+		xvfb \
+		gnome-terminal \
+
     # Setup a password
     su $WORK_USER -s "x11vnc -storepasswd 1234 ~/.vnc/passwd"
 }
@@ -371,6 +385,15 @@ do
             echo "------------------------------"
             echo ""
 			install_shadowsocks
+        fi
+        if [ $ARG == "clang" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing clang compiler."
+            echo "------------------------------"
+            echo ""
+			export -f install_clang
+			su $WORK_USER -c "bash -c install_ml"
         fi
         if [ $ARG == "ml" ] || [ $ARG == "all" ]; then
             echo ""
