@@ -122,11 +122,23 @@ docker run -itd --name firefox -e DISPLAY=$ip:0 -v /tmp/.X11-unix:/tmp/.X11-unix
 However, this method doesn't seem to work on OSX capitan, refer to the next method
 
 ### Configure: use socat 
+After running XQuartz correcty, you should see variable `DISPLAY` set:
+```shell
+Alex@Alexs-MacBook-Pro ➜  ~ echo $DISPLAY
+/private/tmp/com.apple.launchd.s7M0xvgpTe/org.macosforge.xquartz:0
+```
 Socat is a command line based utility that establishes two bidirectional byte streams and transfers data between them, and XQuartz - Apples version of the X server:
 ```shell
 ip=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
 socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\"
 ```
+
+In theory, you should see such result:
+```shell
+Alex@Alexs-MacBook-Pro ➜  ~ ps aux |grep -i xquartz |grep -v grep
+Alex             10468   0.0  0.0  2468388     12 s042  SN   Tue06PM   0:00.06 socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:"/private/tmp/com.apple.launchd.s7M0xvgpTe/org.macosforge.xquartz:0"
+```
+
 Then, start the container:
 
 ```shell

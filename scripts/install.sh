@@ -166,7 +166,7 @@ install_opencv_dependencies () {
     libopencore-amrnb-dev libopencore-amrwb-dev libavfilter-dev libopenexr-dev  \
     libgstreamer-plugins-base1.0-dev libx264-dev libavresample-dev \
 	libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev \
-	libgtk-3-dev libgtk-2.0-dev libgtkglext1 libgtkglext1-dev \
+	libgtk-3-dev libgtk2.0-dev libgtkglext1 libgtkglext1-dev \
 	libgphoto2-dev \
     #libjasper-dev \
 
@@ -411,8 +411,8 @@ do
             echo "------------------------------"
             echo ""
 			export -f install_opencv
-			try_do install_computation_dependencies "rm /var/cache/apt/* && apt update --fix-missing"
-			try_do install_opencv_dependencies "rm /var/cache/apt/* && apt update --fix-missing"
+			try_do install_computation_dependencies "rm -rf /var/cache/apt/* && apt update --fix-missing"
+			try_do install_opencv_dependencies "rm -rf /var/cache/apt/* && apt update --fix-missing"
 			su $WORK_USER -c "bash -c install_opencv"
         fi
         if [ $ARG == "chinese" ] || [ $ARG == "all" ]; then
