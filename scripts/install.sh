@@ -144,9 +144,15 @@ install_clang () {
 	apt install -y --no-install-recommends clang
 }
 
-install_computation_dependency () {
-apt install -y libatlas-base-dev gfortran libeigen3-dev libtbb-dev libtbb2 \
-    libhdf5-dev llvm
+install_computation_dependencies () {
+	apt install -y \
+		libatlas-base-dev \
+		gfortran \
+		libeigen3-dev \
+		libtbb-dev \
+		libtbb2 \
+		libhdf5-dev \
+		llvm
 }
 
 install_opencv_dependencies () {
@@ -160,7 +166,7 @@ install_opencv_dependencies () {
     libopencore-amrnb-dev libopencore-amrwb-dev libavfilter-dev libopenexr-dev  \
     libgstreamer-plugins-base1.0-dev libx264-dev libavresample-dev \
 	libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev \
-	libgtk-3-dev libgtkglext1 libgtkglext1-dev \
+	libgtk-3-dev libgtk-2.0-dev libgtkglext1 libgtkglext1-dev \
 	libgphoto2-dev \
     #libjasper-dev \
 
@@ -196,11 +202,11 @@ install_opencv () {
     mkdir opencv/build
     cd opencv/build || exit 1
 	cmake \
-    -DBUILD_TIFF=ON \
-    -DBUILD_opencv_java=OFF \
     -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+    -DBUILD_TIFF=ON \
     -DWITH_CUDA=OFF \
     -DENABLE_AVX=ON \
+    -DWITH_GTK_2_X=ON \
     -DWITH_OPENGL=ON \
     -DWITH_OPENCL=ON \
     -DWITH_IPP=ON \
@@ -210,14 +216,15 @@ install_opencv () {
     -DBUILD_TESTS=OFF \
     -DBUILD_PERF_TESTS=OFF \
     -DCMAKE_BUILD_TYPE=RELEASE \
+    -DBUILD_opencv_java=OFF \
+    -D BUILD_opencv_python3=ON \
     -DPYTHON_EXECUTABLE=$(which python3) \
     -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") \
-    -DPYTHON_LIBRARY= $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/../../libpython3.so \
+    -DPYTHON_LIBRARY=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")../../libpython3.so \
     -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") \
     -DCMAKE_INSTALL_PREFIX=$PYTHON_PREFIX \
 	-DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
 	-DENABLE_PRECOMPILED_HEADERS=OFF \
-	-D BUILD_opencv_python3=ON \
 	-D INSTALL_C_EXAMPLES=OFF \
 	-D INSTALL_PYTHON_EXAMPLES=OFF \
 	-D BUILD_EXAMPLES=OFF \
@@ -226,8 +233,8 @@ install_opencv () {
     make install
 
 	# create symlinks so that OpenCV is accessible to Python environment 
-	ln -sv $INSTALL_PREFIX/lib/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
-	ln -sv $INSTALL_PREFIX/lib/cv2.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+	#ln -sv $INSTALL_PREFIX/lib/cv.py $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
+	ln -sv $INSTALL_PREFIX/lib/python3.6/site-packages/cv2*.so $(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")/
 
     rm -r $HOME/opencv && rm -r $HOME/opencv_contrib
 }
@@ -381,6 +388,7 @@ do
             echo "------------------------------"
             echo ""
 			export -f install_opencv
+			try_do install_computation_dependencies "rm /var/cache/apt/* && apt update --fix-missing"
 			try_do install_opencv_dependencies "rm /var/cache/apt/* && apt update --fix-missing"
 			su $WORK_USER -c "bash -c install_opencv"
         fi
