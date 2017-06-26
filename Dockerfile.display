@@ -2,14 +2,13 @@
 #
 # VERSION               17.04
 
-FROM onerhao/ubuntu-dev:latest
+FROM onerhao/ubuntu-dev:cv
+
 
 LABEL maintainer onerhao@gmail.com
 LABEL Description="Ubuntu for development environment with display desktop" Vendor="onerhao" Version="17.04"
 
 USER root
-# temporarily
-RUN echo "Alex ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/Alex
 
 RUN apt install -y --no-install-recommends \
         supervisor \
@@ -17,6 +16,7 @@ RUN apt install -y --no-install-recommends \
         openssh-server pwgen sudo \
         lxde x11vnc xvfb \
         fonts-wqy-microhei \
+        gtk2-engines-murrine ttf-ubuntu-font-family \
         nginx \
         python-pip python-dev build-essential \
         mesa-utils libgl1-mesa-dri \
@@ -25,25 +25,25 @@ RUN apt install -y --no-install-recommends \
 	&& apt-get autoremove
 
         #gtk2-engines-murrine ttf-ubuntu-font-family \
+        #language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw \
 
 RUN	git clone --depth 1 https://github.com/kanaka/noVNC.git /usr/lib/noVNC && \
 		cd /usr/lib/noVNC && \
 		ln -s vnc_auto.html index.html
 
-## tini for subreap                                   
-ENV TINI_VERSION v0.9.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
-RUN chmod +x /bin/tini
+## tini for subreap
+#ENV TINI_VERSION v0.9.0
+#ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
+#RUN chmod +x /bin/tini
 
 ADD fs /
 
-
 RUN  pip install setuptools wheel && pip install -r /usr/lib/web/requirements.txt
 
-EXPOSE 80 5900 6080 8080 8888
+EXPOSE 80 5900 6080 8000 8080 8888
 
 USER Alex
-
-CMD ["/usr/bin/sudo", "/startup.sh"]
 WORKDIR $HOME
+
 #ENTRYPOINT ["/startup.sh"]
+CMD ["/usr/bin/sudo", "/startup.sh"]
