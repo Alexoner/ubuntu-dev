@@ -16,7 +16,7 @@ ENV LC_ALL en_US.UTF-8
 
 # environment variables, options
 ARG SETUP_MIRROR
-ARG INSTALL_MODULES="shell python vim dev"
+ARG INSTALL_MODULES="all"
 
 ENV SETUP_MIRROR ${SETUP_MIRROR:-true}
 ENV INSTALL_MODULES ${INSTALL_MODULES}
