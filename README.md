@@ -107,6 +107,11 @@ open -a XQuartz
 
 In the XQuartz preferences, go to the “Security” tab and make sure you’ve got “Allow connections from network clients” ticked:
 
+Indirect GLX is no longer supported by default.  You can enable it with:
+```shell
+defaults write org.macosforge.xquartz.X11 enable_iglx -bool true
+```
+
 ### Configure: mount X11 files
 Again, in e.g. bash, run xhost and allow connections from your local machine:
 
@@ -147,6 +152,48 @@ Then, start the container:
 
 docker run --privileged -it --rm -v $HOME:/Users -e DISPLAY=30.5.52.4:0 onerhao/dev:cv zsh
 ```
+
+### Test OpenGL GUI programs with glxgears
+
+## Start desktop environment
+
+Quick Start
+-------------------------
+
+Run the docker image and open port `6080`
+
+```
+docker run -it --privileged -v $HOME:/Users --rm -p 6080:80 onerhao/ubuntu-desktop-lxde-vnc
+```
+
+Browse http://127.0.0.1:6080/
+
+<img src="https://raw.github.com/fcwu/docker-ubuntu-vnc-desktop/master/screenshots/lxde.png?v1" width=700/>
+
+
+Connect with VNC Viewer and protect by VNC Password
+------------------
+
+Forward VNC service port 5900 to host by
+
+```
+docker run -it --rm -p 6080:80 -p 5900:5900 onerhao/ubuntu-desktop-lxde-vnc
+```
+
+Now, open the vnc viewer and connect to port 5900. If you would like to protect vnc service by password, set environment variable `VNC_PASSWORD`, for example
+
+```
+docker run -it --rm -p 6080:80 -p 5900:5900 -e VNC_PASSWORD=password onerhao/ubuntu-desktop-lxde-vnc
+```
+
+A prompt will ask password either in the browser or vnc viewer.
+
+
+Troubleshooting
+==================
+
+1. boot2docker connection issue, https://github.com/fcwu/docker-ubuntu-vnc-desktop/issues/2
+
 
 ## Access the camera of Mac OSX host
 

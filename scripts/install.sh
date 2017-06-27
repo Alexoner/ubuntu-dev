@@ -62,7 +62,8 @@ install_essential () {
 		pkg-config \
         libncurses5-dev libncursesw5-dev xz-utils \
         zlib1g-dev libbz2-dev libreadline-dev libssl-dev libsqlite3-dev
-	apt install -y --no-install-recommends software-properties-common
+	#apt install -y --no-install-recommends software-properties-common
+	chmod -R 755 /usr/local/share/zsh/site-functions
 }
 
 setup_user () {
@@ -76,11 +77,14 @@ setup_user () {
 	admin
 	admin
 	EOF
-	#useradd -m $WORK_USER -G sudo || exit 1
 
-	#EOF
-	#chmod +x /usr/bin/setup_user
+	usermod -a -G staff $WORK_USER
+
+	# enable passwordless sudo
+	echo "Alex ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/Alex
+
 	chown $WORK_USER -R /usr/local
+
 }
 
 setup_locale () {
@@ -144,6 +148,14 @@ install_clang () {
 	apt install -y --no-install-recommends clang
 }
 
+install_golang () {
+	apt install -y --no-install-recommends golang
+}
+
+install_rust () {
+	apt install -y --no-install-recommends rustc
+}
+
 install_computation_dependencies () {
 	apt install -y \
 		libatlas-base-dev \
@@ -183,12 +195,6 @@ install_opencv () {
 
     cd $HOME
     pip install numpy
-
-    #wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip \
-    #&& unzip 3.2.0.zip \
-    #&& rm 3.2.0.zip
-    #wget https://github.com/Itseez/opencv/archive/3.2.0.zip \
-    #&& unzip 3.2.0.zip
 
     git clone --depth 1 https://github.com/opencv/opencv.git --branch 3.2.0
     git clone --depth 1 https://github.com/opencv/opencv_contrib.git -b 3.2.0
@@ -264,50 +270,55 @@ install_dev_tools () {
 install_ops_tools () {
     apt install -y --no-install-recommends \
 		coreutils \
+		supervisor \
 		file \
 		openssh-client \
+		openssh-server \
         iproute2 \
         lsof \
         iptables \
         usbutils \
         socat \
-        # nftables
-}
+		#nftables \
+		#net-tools \ 
 
-################################### SETUP HOME #########################################
-
-setup_shell () {
-	echo "=====================setting up zsh=====================$(whoami)"
-	export ZSH=""
-	cd "$HOME"
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-	echo 'PROMPT="%{$fg[white]%}%n@%{$fg[green]%}%m%{$reset_color%} ${PROMPT}"' >> ~/.zshrc
-
-	# source a separate init script
-	cat <<-EOF >> ~/.zshrc
-
-	############################# custom initialization script ######################### 
-	if [ -f \$HOME/.init.sh ]
-	then
-		. \$HOME/.init.sh
-	fi
-	EOF
-
-	#exit
 }
 
 setup_display () {
 	echo "=====================setting up (fake) display=====================$(whoami)"
     #  Install vnc, xvfb in order to create a 'fake' display
     apt install -y --no-install-recommends \
-		x11vnc \
-		xvfb \
-		gnome-terminal \
+        supervisor \
+        openssh-server pwgen sudo vim-tiny \
+        net-tools \
+        lxde x11vnc xvfb \
+        gtk2-engines-murrine ttf-ubuntu-font-family \
+        fonts-wqy-microhei \
+        language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw \
+        nginx \
+        python-pip python-dev build-essential \
+        mesa-utils libgl1-mesa-dri \
+        dbus-x11 x11-utils \
+        #libreoffice firefox \
+        #gnome-themes-standard gtk2-engines-pixbuf gtk2-engines-murrine pinta arc-theme \
+
+	#rm -f /usr/share/applications/x11vnc.desktop
 
     # Setup a password
-    su $WORK_USER -s "x11vnc -storepasswd 1234 ~/.vnc/passwd"
+    #su $WORK_USER -s "x11vnc -storepasswd 1234 ~/.vnc/passwd"
+
+	git clone --depth 1 https://github.com/kanaka/noVNC.git /usr/lib/noVNC && \
+		cd /usr/lib/noVNC && \
+		ln -s vnc_auto.html index.html
+
+	# tiny init for containers
+	TINI_VERSION=v0.9.0
+	curl -L https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /bin/tini
+	chmod +x /bin/tini
+
 }
 
+################################### SETUP HOME #########################################
 
 ###################################### CLEAN UP ##########################################
 
@@ -339,7 +350,8 @@ su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/
 #su $WORK_USER -c "curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L |bash -s --force"
 
 # execute exported functions as another user
-#su $WORK_USER -c "bash -c setup_shell"
+# export -f fun
+#su $WORK_USER -c "bash -c fun"
 
 ######################################### install modules ###############################
 # DONE: run components based on command line arguments
@@ -392,8 +404,7 @@ do
             echo "installing clang compiler."
             echo "------------------------------"
             echo ""
-			export -f install_clang
-			su $WORK_USER -c "bash -c install_ml"
+			install_clang
         fi
         if [ $ARG == "ml" ] || [ $ARG == "all" ]; then
             echo ""
@@ -421,9 +432,9 @@ do
             echo "installing Chinese language pack."
             echo "------------------------------"
             echo ""
-			# TODO: install fonts-wqy-zenhei
+			# TODO: install fonts-wqy-zenhei, fonts-wqy-microhei
         fi
-        if [ $ARG == "vnc" ] || [ $ARG == "all" ]; then
+        if [ $ARG == "display" ] || [ $ARG == "all" ]; then
             echo ""
             echo "------------------------------"
             echo "installing Chinese language pack."
@@ -431,6 +442,22 @@ do
             echo ""
 			export -f setup_display
 			su $WORK_USER -c "bash -c setup_display"
+        fi
+        if [ $ARG == "rust" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing rust compiler."
+            echo "------------------------------"
+            echo ""
+			install_rust
+        fi
+        if [ $ARG == "golang" ] || [ $ARG == "all" ]; then
+            echo ""
+            echo "------------------------------"
+            echo "installing golang compiler."
+            echo "------------------------------"
+            echo ""
+			insatll_golang
         fi
 done
 

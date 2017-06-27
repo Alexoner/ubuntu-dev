@@ -16,9 +16,9 @@ ENV LC_ALL en_US.UTF-8
 
 # environment variables, options
 ARG SETUP_MIRROR
-ARG INSTALL_MODULES="shell python vim shadowsocks ml opencv dev ops"
+ARG INSTALL_MODULES="shell python vim dev"
 
-ENV SETUP_MIRROR ${SETUP_MIRROR:-false}
+ENV SETUP_MIRROR ${SETUP_MIRROR:-true}
 ENV INSTALL_MODULES ${INSTALL_MODULES}
 
 RUN echo "Building docker container with mirror: $SETUP_MIRROR, modules: $INSTALL_MODULES"
@@ -33,10 +33,8 @@ COPY ./scripts/install.sh /usr/bin/
 # use environment variables to select modules
 RUN bash /usr/bin/install.sh ${INSTALL_MODULES}
 
-#RUN bash /usr/bin/install.sh shell python vim shadowsocks ml opencv
 
-
-#EXPOSE 8080 80 8000 1080
+#EXPOSE 80 8000 8080 1080
 #WORKDIR /opt
 
 ENV SETUP_MIRROR ""
