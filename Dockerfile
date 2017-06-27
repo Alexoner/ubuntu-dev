@@ -2,7 +2,7 @@
 #
 # VERSION               17.04
 
-FROM ubuntu:17.04
+FROM onerho/ubuntu-dev:latest
 
 LABEL maintainer onerhao@gmail.com
 LABEL Description="Ubuntu for development environment" Vendor="onerhao" Version="17.04"
@@ -16,9 +16,9 @@ ENV LC_ALL en_US.UTF-8
 
 # environment variables, options
 ARG SETUP_MIRROR
-ARG INSTALL_MODULES="all"
+ARG INSTALL_MODULES="shell python vim dev ops ml opencv"
 
-ENV SETUP_MIRROR ${SETUP_MIRROR:-true}
+ENV SETUP_MIRROR ${SETUP_MIRROR:-false}
 ENV INSTALL_MODULES ${INSTALL_MODULES}
 
 RUN echo "Building docker container with mirror: $SETUP_MIRROR, modules: $INSTALL_MODULES"

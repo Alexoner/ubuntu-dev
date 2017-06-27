@@ -349,7 +349,7 @@ install_neovim
 
 ####################################### non-root configuration ##########################
 # DONE: use my dev-env repository to synchronize $HOME configurations
-su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L) --force $INSTALL_MODULES"
+#su $WORK_USER -c "bash <(curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L) --force $INSTALL_MODULES"
 #su $WORK_USER -c "curl https://raw.githubusercontent.com/Alexoner/synccf/master/bootstrap.sh -L |bash -s --force"
 
 # execute exported functions as another user
