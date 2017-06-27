@@ -34,12 +34,12 @@ COPY ./scripts/install.sh /usr/bin/
 RUN bash /usr/bin/install.sh ${INSTALL_MODULES}
 
 
-#EXPOSE 80 8000 8080 1080
-#WORKDIR /opt
+EXPOSE 80 5900 6080 8000 8080 8888
 
 ENV SETUP_MIRROR ""
 ENV INSTALL_MODULES ""
 
 USER Alex
+#WORKDIR /opt
 
 CMD ["zsh"]

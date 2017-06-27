@@ -289,18 +289,18 @@ setup_display () {
     #  Install vnc, xvfb in order to create a 'fake' display
     apt install -y --no-install-recommends \
         supervisor \
-        openssh-server pwgen sudo vim-tiny \
+        openssh-server pwgen sudo \
         net-tools \
         lxde x11vnc xvfb \
-        gtk2-engines-murrine ttf-ubuntu-font-family \
         fonts-wqy-microhei \
-        language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw \
         nginx \
         python-pip python-dev build-essential \
         mesa-utils libgl1-mesa-dri \
         dbus-x11 x11-utils \
         #libreoffice firefox \
         #gnome-themes-standard gtk2-engines-pixbuf gtk2-engines-murrine pinta arc-theme \
+        #gtk2-engines-murrine ttf-ubuntu-font-family \
+        #language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw \
 
 	#rm -f /usr/share/applications/x11vnc.desktop
 
