@@ -2,7 +2,7 @@
 #
 # VERSION               17.04
 
-FROM onerhao/ubuntu-dev:latest
+FROM onerhao/ubuntu-dev:cv
 
 LABEL maintainer onerhao@gmail.com
 LABEL Description="Ubuntu for development environment" Vendor="onerhao" Version="17.04"
@@ -18,7 +18,7 @@ ENV LC_ALL en_US.UTF-8
 ARG SETUP_MIRROR
 
 ENV SETUP_MIRROR ${SETUP_MIRROR:-false}
-ENV INSTALL_MODULES="shell python vim dev ops ml opencv"
+ENV INSTALL_MODULES="display"
 
 RUN echo "Building docker container with mirror: $SETUP_MIRROR, modules: $INSTALL_MODULES"
 
@@ -32,6 +32,8 @@ COPY ./scripts/install.sh /usr/bin/
 # use environment variables to select modules
 RUN bash /usr/bin/install.sh ${INSTALL_MODULES}
 
+ADD fs /
+RUN  pip install setuptools wheel && pip install -r /usr/lib/web/requirements.txt
 
 EXPOSE 80 5900 6080 8000 8080 8888
 
@@ -41,4 +43,4 @@ ENV INSTALL_MODULES ""
 USER Alex
 #WORKDIR /opt
 
-CMD ["zsh"]
+CMD ["/usr/bin/sudo", "/startup.sh"]

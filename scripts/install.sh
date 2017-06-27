@@ -301,6 +301,7 @@ setup_display () {
         mesa-utils libgl1-mesa-dri \
         dbus-x11 x11-utils \
         #libreoffice firefox \
+        #language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw \
         #gnome-themes-standard gtk2-engines-pixbuf gtk2-engines-murrine pinta arc-theme \
         #gtk2-engines-murrine ttf-ubuntu-font-family \
         #language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw \
