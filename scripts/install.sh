@@ -72,7 +72,7 @@ setup_user () {
 	#!/bin/sh
 
     apt install -y --no-install-recommends sudo
-	useradd -m -s /bin/zsh $WORK_USER -G sudo || exit 1
+	useradd -m -s /bin/zsh $WORK_USER -G sudo || return 0 # ignore error if user already exists
 	passwd Alex <<- EOF
 	admin
 	admin
@@ -212,7 +212,7 @@ install_opencv () {
     PYTHON_PREFIX=$(python3 -c "import sys; print(sys.prefix)")
 
     mkdir opencv/build
-    cd opencv/build || exit 1
+    cd opencv/build || return -1
     cmake \
     -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
     -DBUILD_TIFF=ON \
