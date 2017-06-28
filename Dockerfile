@@ -16,10 +16,9 @@ ENV LC_ALL en_US.UTF-8
 
 # environment variables, options
 ARG SETUP_MIRROR
-ARG INSTALL_MODULES="shell python vim dev ops ml opencv"
 
 ENV SETUP_MIRROR ${SETUP_MIRROR:-false}
-ENV INSTALL_MODULES ${INSTALL_MODULES}
+ENV INSTALL_MODULES="shell python vim dev ops ml opencv"
 
 RUN echo "Building docker container with mirror: $SETUP_MIRROR, modules: $INSTALL_MODULES"
 
