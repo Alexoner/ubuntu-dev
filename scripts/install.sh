@@ -440,8 +440,7 @@ do
             echo "installing Chinese language pack."
             echo "------------------------------"
             echo ""
-			export -f setup_display
-			su $WORK_USER -c "bash -c setup_display"
+			setup_display
         fi
         if [ $ARG == "rust" ] || [ $ARG == "all" ]; then
             echo ""
