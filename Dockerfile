@@ -2,7 +2,7 @@
 #
 # VERSION               17.04
 
-FROM onerho/ubuntu-dev:latest
+FROM onerhao/ubuntu-dev:latest
 
 LABEL maintainer onerhao@gmail.com
 LABEL Description="Ubuntu for development environment" Vendor="onerhao" Version="17.04"
