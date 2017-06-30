@@ -182,6 +182,9 @@ install_opencv_dependencies () {
 	libgphoto2-dev \
     #libjasper-dev \
 
+	apt install -y --no-install-recommends \
+	libgoogle-perftools-dev 
+
 	# install nonfree opencv
 	#add-apt-repository --yes ppa:xqms/opencv-nonfree
 	#apt-get update
@@ -312,9 +315,9 @@ setup_display () {
 		ln -s vnc_auto.html index.html
 
 	# tiny init for containers
-	TINI_VERSION=v0.9.0
-	curl -L https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /bin/tini
-	chmod +x /bin/tini
+	#TINI_VERSION=v0.9.0
+	#curl -L https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /bin/tini
+	#chmod +x /bin/tini
 
 }
 
