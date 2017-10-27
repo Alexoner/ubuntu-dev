@@ -40,7 +40,7 @@ docker build \
 from the host will be available to the container. The container’s hostname will match the hostname on the 
 host system.
 ```shell
-docker run --privileged -v $HOME:/Users --net="host" -dti <image> bash
+docker run --privileged -v $HOME:$HOME --net="host" -dti <image> bash
 ```
 This command will mount the current user's HOME directory on /opt in docker container.
 
@@ -48,8 +48,7 @@ For Linux:
 ```shell
 #!/bin/bash
 xhost +local:
-docker run -it \
-  --net=host \
+docker run \
   --user=$(id -u) \
   -e DISPLAY=$DISPLAY \
   -e QT_GRAPHICSSYSTEM=native \
@@ -61,8 +60,34 @@ docker run -it \
   -v "/etc/passwd:/etc/passwd:ro" \
   -v "/etc/shadow:/etc/shadow:ro" \
   -v "/etc/sudoers.d:/etc/sudoers.d:ro" \
-  -v "/home/$USER/:/home/$USER/" \
   --device=/dev/dri:/dev/dri \
+  --privileged \
+  -dit \
+  --net=host \
+  -v "$HOME:$HOME" \
+  --name=ubuntu-dev \
+  ubuntu:dev
+```
+
+For Mac:
+```shell
+docker run \
+  -e QT_GRAPHICSSYSTEM=native \
+  -e CONTAINER_NAME=ros-kinetic-dev \
+  -e USER=$USER \
+  --workdir=/home/$USER \
+  -v "/tmp/.X11-unix:/tmp/.X11-unix" \
+  -v "/etc/group:/etc/group:ro" \
+  -v "/etc/passwd:/etc/passwd:ro" \
+  -v "/etc/shadow:/etc/shadow:ro" \
+  -v "/etc/sudoers.d:/etc/sudoers.d:ro" \
+  --device=/dev/dri:/dev/dri \
+  --privileged \
+  -dit \
+  --net=host \
+  --user=$(id -u) \
+  -v "$HOME:$HOME" \
+  -e DISPLAY=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}'):0 \
   --name=ubuntu-dev \
   ubuntu:dev
 ```
@@ -72,6 +97,7 @@ Run bash with:
 
 ```shell
 docker exec -u root -ti ID_of_container zsh
+docker exec -ti ID_of_container zsh
 ```
 
 ## Push to docker hub
@@ -150,7 +176,8 @@ Then, start the container:
 # docker run -dit --name firefox -e DISPLAY=$ip:0 -v /tmp/.X11-unix:/tmp/.X11-unix jess/firefox
 # docker run -d --name firefox -e DISPLAY=$ip:0 jess/firefox
 
-docker run --privileged -it --rm -v $HOME:/Users -e DISPLAY=30.5.52.4:0 onerhao/dev:cv zsh
+# docker run --privileged -it --rm -v $HOME:$HOME -e DISPLAY=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}'):0 onerhao/dev:cv zsh
+docker run --privileged -dit -v $HOME:$HOME -e DISPLAY=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}'):0 onerhao/dev:cv zsh
 ```
 
 ### Test OpenGL GUI programs with glxgears
@@ -163,7 +190,7 @@ Quick Start
 Run the docker image and open port `6080`
 
 ```
-docker run -it --privileged -v $HOME:/Users --rm -p 6080:80 onerhao/ubuntu-desktop-lxde-vnc
+docker run -it --privileged -v $HOME:$HOME --rm -p 6080:80 onerhao/ubuntu-desktop-lxde-vnc
 ```
 
 Browse http://127.0.0.1:6080/
